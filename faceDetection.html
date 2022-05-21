@@ -12,10 +12,8 @@
 </head>
 <body>
 
-  
-<img id="myImg" src="bbt1.jpg" />
-
-<canvas id="myCanvas" />
+    <img id="myImg" src="bbt1.jpg" />
+    <canvas id="myCanvas">
 
   </body>
 
@@ -36,13 +34,18 @@
         return
       }
 
-      const input = document.getElementById('myImg')
-
-      const results = await faceapi.detectAllFaces(input)
-
-      const canvas = $('#overlay').get(0)
-      faceapi.matchDimensions(canvas, inputImgEl)
-      faceapi.draw.drawDetections(canvas, faceapi.resizeResults(results, inputImgEl))
+  const input = document.getElementById("myImg");
+  const result = await faceapi
+    .detectSingleFace(input, new faceapi.SsdMobilenetv1Options())
+    .withFaceLandmarks()
+    .withFaceDescriptor();
+  const displaySize = { width: input.width, height: input.height };
+  // resize the overlay canvas to the input dimensions
+  const canvas = document.getElementById("myCanvas");
+  faceapi.matchDimensions(canvas, displaySize);
+  const resizedDetections = faceapi.resizeResults(result, displaySize);
+  console.log(resizedDetections);
+})();
     }
 
     async function run() {
