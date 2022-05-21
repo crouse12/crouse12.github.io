@@ -3,10 +3,10 @@ const video = document.getElementById("video");
 tt()
 
 async function tt(){
-    awit faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-    awit faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-    awit faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-    awit faceapi.nets.faceExpressionNet.loadFromUri('/models')
+    await faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+    await faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+    await awaitfaceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+    await faceapi.nets.faceExpressionNet.loadFromUri('/models')
     const canvas = faceapi.createCanvasFromMedia(video);
     document.body.append(canvas);
 
