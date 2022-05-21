@@ -1,5 +1,7 @@
 const video = document.getElementById("video");
-
+function startVideo()
+{
+}
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
     faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
