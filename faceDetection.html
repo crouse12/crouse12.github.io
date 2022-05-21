@@ -9,59 +9,224 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.css">
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+      <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Face Detection</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" >    
+    <link rel="stylesheet" href="style/face-detection.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
 </head>
 <body>
-
-    <img id="myImg" src="bbt1.jpg" />
-    <canvas id="myCanvas">
-
+        <main>
+            <div class="container mt-1">
+                <div class="row">
+                    <div class="col-12 col-md-4 col-xl-3 align-top">
+                        <div class="row mb-3">
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch">
+                                        <input type="checkbox" id="webcam-switch">
+                                        <i></i> Webcam </label>  
+                                        <button id="cameraFlip" class="btn d-none"></button>     
+                                </div> 
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch disabled">
+                                        <input type="checkbox" disabled id="detection-switch">
+                                        <i></i> Detect Face </label>      
+                                </div>   
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch disabled">
+                                        <input type="checkbox" disabled id="box-switch">
+                                        <i></i> Bounding Box </label>      
+                                </div>
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch disabled">
+                                        <input type="checkbox" disabled id="landmarks-switch">
+                                        <i></i> Landmarks </label>      
+                                </div>
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch disabled">
+                                        <input type="checkbox" disabled id="expression-switch">
+                                        <i></i> Expression </label>      
+                                </div>    
+                                <div class="col-md-10 col-6 form-control">
+                                        <label class="form-switch disabled">
+                                        <input type="checkbox" disabled id="age-gender-switch">
+                                        <i></i> Age & Gender </label>      
+                                </div>      
+                                <div class="col-md-10 col-6 mt-2">
+                                     More on  <a href="https://bensonruan.com" target="_blank">bensonruan.com</a>    
+                                </div>               
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-8 col-xl-9 align-top" id="webcam-container">
+                        <div class="loading d-none">
+                                Loading Model
+                                <div class="spinner-border" role="status">
+                                        <span class="sr-only"></span>
+                                </div>
+                        </div>
+                        
+                        <div id="video-container">
+                                <video id="webcam" autoplay muted playsinline></video>
+                        </div>  
+                        <div id="errorMsg" class="col-12 alert-danger d-none">
+                        Fail to start camera <br>
+                        1. Please allow permission to access camera. <br>
+                        2. If you are browsing through social media built in browsers, look for the ... or browser icon on the right top/bottom corner, and open the page in Sarafi (iPhone)/ Chrome (Android)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>   
   </body>
 
   <script>
-async function detectFace() {
-  const label = "Huu";
-  const numberImage = 5;
-  const descriptions = [];
-  for (let i = 1; i <= numberImage; i++) {
-    const img = await faceapi.fetchImage(
-      `/data/Huu/${i}.jpg`
-    );
-    const detection = await faceapi
-      .detectSingleFace(img)
-      .withFaceLandmarks()
-      .withFaceDescriptor();
-    descriptions.push(detection.descriptor);
+const webcamElement = document.getElementById('webcam');
+const webcam = new Webcam(webcamElement, 'user');
+const modelPath = 'models';
+let currentStream;
+let displaySize;
+let convas;
+let faceDetection;
+
+$("#webcam-switch").change(function () {
+  if(this.checked){
+      webcam.start()
+          .then(result =>{
+             cameraStarted();
+             webcamElement.style.transform = "";
+             console.log("webcam started");
+          })
+          .catch(err => {
+              displayError();
+          });
   }
-  return new faceapi.LabeledFaceDescriptors(label, descriptions);
+  else {        
+      cameraStopped();
+      webcam.stop();
+      console.log("webcam stopped");
+  }        
+});
+
+$('#cameraFlip').click(function() {
+    webcam.flip();
+    webcam.start()
+    .then(result =>{ 
+      webcamElement.style.transform = "";
+    });
+});
+
+$("#webcam").bind("loadedmetadata", function () {
+  displaySize = { width:this.scrollWidth, height: this.scrollHeight }
+});
+
+$("#detection-switch").change(function () {
+  if(this.checked){
+    toggleContrl("box-switch", true);
+    toggleContrl("landmarks-switch", true);
+    toggleContrl("expression-switch", true);
+    toggleContrl("age-gender-switch", true);
+    $("#box-switch").prop('checked', true);
+    $(".loading").removeClass('d-none');
+    Promise.all([
+      faceapi.nets.tinyFaceDetector.load(modelPath),
+      faceapi.nets.faceLandmark68TinyNet.load(modelPath),
+      faceapi.nets.faceExpressionNet.load(modelPath),
+      faceapi.nets.ageGenderNet.load(modelPath)
+    ]).then(function(){
+      createCanvas();
+      startDetection();
+    })
+  }
+  else {
+    clearInterval(faceDetection);
+    toggleContrl("box-switch", false);
+    toggleContrl("landmarks-switch", false);
+    toggleContrl("expression-switch", false);
+    toggleContrl("age-gender-switch", false);
+    if(typeof canvas !== "undefined"){
+      setTimeout(function() {
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+      }, 1000);
+    }
+  }        
+});
+
+function createCanvas(){
+  if( document.getElementsByTagName("canvas").length == 0 )
+  {
+    canvas = faceapi.createCanvasFromMedia(webcamElement)
+    document.getElementById('webcam-container').append(canvas)
+    faceapi.matchDimensions(canvas, displaySize)
+  }
 }
-    (async () => {
-  // Load model
-  await faceapi.nets.ssdMobilenetv1.loadFromUri("/");
-  await faceapi.nets.faceLandmark68Net.loadFromUri("/");
 
-  // Detect Face
-  const input = document.getElementById("myImg");
-  const result = await faceapi
-    .detectSingleFace(input, new faceapi.SsdMobilenetv1Options())
-    .withFaceLandmarks()
-    .withFaceDescriptor();
-  const displaySize = { width: input.width, height: input.height };
-  // resize the overlay canvas to the input dimensions
-  const canvas = document.getElementById("myCanvas");
-  faceapi.matchDimensions(canvas, displaySize);
-  const resizedDetections = faceapi.resizeResults(result, displaySize);
-  console.log(resizedDetections);
-
-  // Recognize Face
-  const labeledFaceDescriptors = await detectFace();
-  const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.7);
-  if (result) {
-    const bestMatch = faceMatcher.findBestMatch(result.descriptor);
-    const box = resizedDetections.detection.box;
-    const drawBox = new faceapi.draw.DrawBox(box, { label: bestMatch.label });
-    drawBox.draw(canvas);
+function toggleContrl(id, show){
+  if(show){
+    $("#"+id).prop('disabled', false);
+    $("#"+id).parent().removeClass('disabled');
+  }else{
+    $("#"+id).prop('checked', false).change();
+    $("#"+id).prop('disabled', true);
+    $("#"+id).parent().addClass('disabled');
   }
-})();
+}
+
+function startDetection(){
+  faceDetection = setInterval(async () => {
+    const detections = await faceapi.detectAllFaces(webcamElement, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceExpressions().withAgeAndGender()
+    const resizedDetections = faceapi.resizeResults(detections, displaySize)
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+    if($("#box-switch").is(":checked")){
+      faceapi.draw.drawDetections(canvas, resizedDetections)
+    }
+    if($("#landmarks-switch").is(":checked")){
+      faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+    }
+    if($("#expression-switch").is(":checked")){
+      faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+    }
+    if($("#age-gender-switch").is(":checked")){
+      resizedDetections.forEach(result => {
+        const { age, gender, genderProbability } = result
+        new faceapi.draw.DrawTextField(
+          [
+            `${faceapi.round(age, 0)} years`,
+            `${gender} (${faceapi.round(genderProbability)})`
+          ],
+          result.detection.box.bottomRight
+        ).draw(canvas)
+      })
+    }
+    
+    if(!$(".loading").hasClass('d-none')){
+      $(".loading").addClass('d-none')
+    }
+  }, 300)
+}
+
+function cameraStarted(){
+  toggleContrl("detection-switch", true);
+  $("#errorMsg").addClass("d-none");
+  if( webcam.webcamList.length > 1){
+    $("#cameraFlip").removeClass('d-none');
+  }
+}
+
+function cameraStopped(){
+  toggleContrl("detection-switch", false);
+  $("#errorMsg").addClass("d-none");
+  $("#cameraFlip").addClass('d-none');
+}
+
+function displayError(err = ''){
+  if(err!=''){
+      $("#errorMsg").html(err);
+  }
+  $("#errorMsg").removeClass("d-none");
+}
   </script>
 </body>
 </html>
