@@ -114,6 +114,17 @@
   </body>
 
   <script>
+    function initImageSelectionControls(initialValue = 'bbt1.jpg', withFaceExpressionImages = false) {
+  renderImageSelectList(
+    '#selectList',
+    async (uri) => {
+      await onSelectedImageChanged(uri)
+    },
+    initialValue,
+    withFaceExpressionImages
+  )
+  onSelectedImageChanged($('#selectList select').val())
+}
     async function updateResults() {
       if (!isFaceDetectionModelLoaded()) {
         return
