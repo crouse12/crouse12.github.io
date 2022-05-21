@@ -49,15 +49,3 @@ function renderImageSelectList(selectListId, onChange, initialValue, withFaceExp
     renderChildren
   )
 }
-
-function initImageSelectionControls(initialValue = 'bbt1.jpg', withFaceExpressionImages = false) {
-  renderImageSelectList(
-    '#selectList',
-    async (uri) => {
-      await onSelectedImageChanged(uri)
-    },
-    initialValue,
-    withFaceExpressionImages
-  )
-  onSelectedImageChanged($('#selectList select').val())
-}
