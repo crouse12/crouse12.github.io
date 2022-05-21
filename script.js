@@ -1,16 +1,12 @@
 const video = document.getElementById("video");
-function startVideo()
-{
-}
-Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-    faceapi.nets.faceExpressionNet.loadFromUri('/models')
-]).then(startVideo);
 
+tt()
 
-video.addEventListener('play', () => {
+anync tt function(){
+    awit faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+    awit faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+    awit faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+    awit faceapi.nets.faceExpressionNet.loadFromUri('/models')
     const canvas = faceapi.createCanvasFromMedia(video);
     document.body.append(canvas);
 
@@ -28,4 +24,4 @@ video.addEventListener('play', () => {
             faceapi.draw.drawFaceLandmarks(canvas,resizedDetections);
             faceapi.draw.drawFaceExpressions(canvas,resizedDetections);
     },1000);
-});
+}
