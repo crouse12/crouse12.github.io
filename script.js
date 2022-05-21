@@ -7,13 +7,6 @@ Promise.all([
     faceapi.nets.faceExpressionNet.loadFromUri('/models')
 ]).then(startVideo);
 
-function startVideo(){
-    navigator.getUserMedia(
-        { video: {} },
-        stream => video.srcObject = stream,
-        err => console.log(err) 
-        )      
-}
 
 video.addEventListener('play', () => {
     const canvas = faceapi.createCanvasFromMedia(video);
