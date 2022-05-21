@@ -2,7 +2,7 @@ const video = document.getElementById("video");
 
 tt()
 
-anync tt function(){
+anync function tt(){
     awit faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
     awit faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
     awit faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
