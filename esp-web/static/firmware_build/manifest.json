@@ -6,7 +6,7 @@
   "builds": [
     {
       "chipFamily": "ESP32",
-      "parts": [{ "path": "esp321.bin", "offset": 4096 }]
+      "parts": [{ "path": "esp321.bin", "offset": 0 }]
     },
     {
       "chipFamily": "ESP8266",
